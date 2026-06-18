@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://jacoposartini.github.io/lab-elementi-economia-beni-musicali/sitemap-index.xml
+Sitemap: https://jacoposartini.github.io/economia-beni-musicali/sitemap-index.xml

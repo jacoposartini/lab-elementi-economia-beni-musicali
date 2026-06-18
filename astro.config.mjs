@@ -6,7 +6,7 @@ import sitemap from "@astrojs/sitemap";
 // Se in futuro userai un dominio custom, metti site:"https://tuodominio" e base:"/".
 export default defineConfig({
   site: "https://jacoposartini.github.io",
-  base: "/lab-elementi-economia-beni-musicali",
+  base: "/economia-beni-musicali",
   trailingSlash: "ignore",
   build: { format: "directory" },
   integrations: [sitemap()],
