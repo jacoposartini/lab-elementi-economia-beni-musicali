@@ -1,0 +1,142 @@
+---
+import Base from "../layouts/Base.astro";
+import { topics, songs } from "../data/course";
+import { blocksText } from "../lib/content";
+import { href } from "../lib/links";
+import SongCard from "../components/SongCard.astro";
+
+// Indice argomenti calcolato a build-time (titolo/lead/keyword/corpo).
+const topicIndex = topics.map((t) => ({
+  id: t.id,
+  title: t.title,
+  lead: t.lead || "",
+  text: blocksText(t.body),
+  kw: (t.keywords || []).join(" "),
+}));
+const topicHref = href("topic/");
+---
+
+<Base
+  title="Ricerca"
+  noindex={true}
+  description="Cerca argomenti, artisti, brani e concetti del corso di Elementi di Economia dei Beni Musicali."
+>
+  <h1 class="title">Ricerca</h1>
+  <div id="searchResults"></div>
+
+  <script type="application/json" id="topicIndex" is:inline set:html={JSON.stringify(topicIndex)}
+  />
+  <div id="songPool" hidden>
+    {songs.map((s) => <SongCard id={s.id} />)}
+  </div>
+</Base>
+
+<script>
+  // Pagina client-side: rende i risultati dalla query ?q= a ogni navigazione.
+  import { href } from "../lib/links";
+  const topicHref = href("topic/");
+
+  const ESC: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" };
+  const esc = (s: string) => (s || "").replace(/[&<>"]/g, (c) => ESC[c]);
+
+  function run() {
+    const out = document.getElementById("searchResults");
+    if (!out) return;
+    const idxEl = document.getElementById("topicIndex");
+    const pool = document.getElementById("songPool");
+    if (!idxEl || !pool) return;
+
+    const q = (new URLSearchParams(location.search).get("q") || "").trim();
+    const box = document.getElementById("globalSearch") as HTMLInputElement | null;
+    if (box && document.activeElement !== box) box.value = q;
+
+    out.innerHTML = "";
+    if (q.length < 2) {
+      out.innerHTML = '<div class="empty">Scrivi almeno 2 caratteri.</div>';
+      return;
+    }
+
+    const ql = q.toLowerCase();
+    const reHL = new RegExp("(" + q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ")", "ig");
+    const hl = (s: string) => esc(s).replace(reHL, '<span class="hl">$1</span>');
+
+    type TI = { id: string; title: string; lead: string; text: string; kw: string };
+    const topicIndex = JSON.parse(idxEl.textContent || "[]") as TI[];
+    const topicHits = topicIndex
+      .map((t) => {
+        const hay = (t.title + " " + t.lead + " " + t.kw + " " + t.text).toLowerCase();
+        if (hay.indexOf(ql) < 0) return null;
+        return { t, score: t.title.toLowerCase().indexOf(ql) >= 0 ? 0 : 1 };
+      })
+      .filter((x): x is { t: TI; score: number } => x !== null)
+      .sort((a, b) => a.score - b.score);
+
+    const poolCards = Array.from(pool.querySelectorAll<HTMLElement>(".song"));
+    const songHits = poolCards.filter((c) => {
+      const hay = (
+        (c.dataset.title || "") +
+        " " +
+        (c.dataset.artist || "") +
+        " " +
+        (c.dataset.genre || "")
+      ).toLowerCase();
+      return hay.indexOf(ql) >= 0;
+    });
+
+    function snippet(text: string) {
+      const i = text.toLowerCase().indexOf(ql);
+      if (i < 0) return esc(text.slice(0, 160));
+      const a = Math.max(0, i - 70),
+        b = Math.min(text.length, i + 90);
+      return (a > 0 ? "…" : "") + esc(text.slice(a, b)) + (b < text.length ? "…" : "");
+    }
+
+    const lead = document.createElement("div");
+    lead.className = "lead";
+    lead.innerHTML =
+      'Risultati per "' +
+      esc(q) +
+      '": ' +
+      topicHits.length +
+      " argomenti, " +
+      songHits.length +
+      " brani.";
+    out.appendChild(lead);
+
+    if (topicHits.length) {
+      const h = document.createElement("h2");
+      h.textContent = "Argomenti";
+      out.appendChild(h);
+      topicHits.slice(0, 40).forEach(({ t }) => {
+        const a = document.createElement("a");
+        a.className = "card";
+        a.style.cssText = "display:block;margin:8px 0";
+        a.href = topicHref + t.id;
+        a.innerHTML =
+          "<h3>" + hl(t.title) + "</h3><p>" + snippet(t.text + " " + t.lead).replace(reHL, '<span class="hl">$1</span>') + "</p>";
+        out.appendChild(a);
+      });
+    }
+
+    if (songHits.length) {
+      const h = document.createElement("h2");
+      h.textContent = "Brani";
+      out.appendChild(h);
+      const wrap = document.createElement("div");
+      wrap.className = "songs-wrap";
+      wrap.setAttribute("data-songlist", "");
+      songHits.slice(0, 60).forEach((c) => {
+        const clone = c.cloneNode(true) as HTMLElement;
+        clone.removeAttribute("hidden");
+        wrap.appendChild(clone);
+      });
+      out.appendChild(wrap);
+    }
+
+    if (!topicHits.length && !songHits.length) {
+      out.insertAdjacentHTML("beforeend", '<div class="empty">Nessun risultato.</div>');
+    }
+  }
+
+  document.addEventListener("astro:page-load", run);
+</script>

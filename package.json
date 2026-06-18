@@ -1,0 +1,21 @@
+{
+  "name": "lab-elementi-economia-beni-musicali",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+  "license": "GPL-3.0",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.4",
+    "astro": "^5.6.1",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "@astrojs/sitemap": "^3.7.3"
+  }
+}

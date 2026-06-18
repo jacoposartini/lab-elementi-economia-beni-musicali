@@ -1,0 +1,80 @@
+---
+import Base from "../../layouts/Base.astro";
+import { topics, topicById, areaById, topicsOfArea } from "../../data/course";
+import { href } from "../../lib/links";
+import Blocks from "../../components/Blocks.astro";
+import SongCard from "../../components/SongCard.astro";
+
+export function getStaticPaths() {
+  return topics.map((t) => ({ params: { id: t.id } }));
+}
+
+const { id } = Astro.params;
+const t = topicById[id!];
+const a = areaById[t.area] ?? ({ title: "", color: "#888" } as const);
+
+const siblings = topicsOfArea(t.area);
+const i = siblings.findIndex((s) => s.id === t.id);
+const prev = i > 0 ? siblings[i - 1] : null;
+const next = i < siblings.length - 1 ? siblings[i + 1] : null;
+
+const related = (t.related || []).map((rid) => topicById[rid]).filter(Boolean);
+---
+
+<Base title={t.title} activeTopic={t.id} description={t.lead}>
+  <div class="crumb">
+    <span class="dot" style={`background:${a.color || "#888"}`}></span>
+    <a href={href("area/" + t.area)}>{a.title || ""}</a> › {t.title}
+  </div>
+  <h1 class="title">{t.title}</h1>
+  {t.lead && <div class="lead">{t.lead}</div>}
+
+  <Blocks blocks={t.body} />
+
+  {
+    t.songs && t.songs.length > 0 && (
+      <>
+        <div class="sec-h">
+          <h2>Brani da ascoltare mentre studi</h2>
+          <span class="kbd">{t.songs.length}</span>
+        </div>
+        <div class="songs-wrap" data-songlist>
+          {t.songs.map((sid) => (
+            <SongCard id={sid} />
+          ))}
+        </div>
+      </>
+    )
+  }
+
+  {
+    t.keywords && t.keywords.length > 0 && (
+      <>
+        <h2>Parole chiave</h2>
+        <div class="chips">
+          {t.keywords.map((k) => (
+            <span class="chip k">{k}</span>
+          ))}
+        </div>
+      </>
+    )
+  }
+
+  {
+    related.length > 0 && (
+      <>
+        <h2>Collegamenti</h2>
+        <div class="rel">
+          {related.map((r) => (
+            <a href={href("topic/" + r.id)}>→ {r.title}</a>
+          ))}
+        </div>
+      </>
+    )
+  }
+
+  <div class="rel" style="margin-top:26px;border-top:1px solid var(--line);padding-top:14px">
+    {prev && <a href={href("topic/" + prev.id)}>‹ {prev.title}</a>}
+    {next && <a href={href("topic/" + next.id)} style="float:right">{next.title} ›</a>}
+  </div>
+</Base>

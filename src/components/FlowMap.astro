@@ -1,0 +1,55 @@
+---
+/* Mappa a flusso: nodi su griglia col/row con archi etichettati (porta maps.js). */
+import type { ConceptMap } from "../data/types";
+import { areaById } from "../data/course";
+import MapNode from "./MapNode.astro";
+
+interface Props {
+  map: ConceptMap;
+}
+const { map } = Astro.props;
+const cols = Math.max(...map.nodes.map((n) => n.col)) + 1;
+const rows = Math.max(...map.nodes.map((n) => n.row)) + 1;
+const cw = 210;
+const rh = 78;
+const padX = 30;
+const padY = 40;
+const W = padX * 2 + cols * cw;
+const H = padY * 2 + rows * rh;
+const pos: Record<string, { x: number; y: number }> = {};
+for (const n of map.nodes) pos[n.id] = { x: padX + n.col * cw + 90, y: padY + n.row * rh + 18 };
+
+const edges = (map.edges || [])
+  .map((e) => ({ e, a: pos[e.a], b: pos[e.b] }))
+  .filter((x) => x.a && x.b);
+---
+
+<div class="mapwrap">
+  <svg class="map" viewBox={`0 0 ${W} ${H}`} width={W} height={H}>
+    {
+      edges.map(({ e, a, b }) => (
+        <>
+          <line class="edge" x1={a.x + 76} y1={a.y} x2={b.x - 76} y2={b.y} />
+          {e.label && (
+            <text class="edge-lbl" x={(a.x + b.x) / 2} y={(a.y + b.y) / 2 - 4} text-anchor="middle">
+              {e.label}
+            </text>
+          )}
+        </>
+      ))
+    }
+    {
+      map.nodes.map((n) => (
+        <MapNode
+          x={pos[n.id].x}
+          y={pos[n.id].y}
+          label={n.label}
+          color={n.color || (n.area && areaById[n.area] ? areaById[n.area].color : "#7d9bbd")}
+          topic={n.topic}
+          area={n.area}
+          hub={n.hub}
+        />
+      ))
+    }
+  </svg>
+</div>

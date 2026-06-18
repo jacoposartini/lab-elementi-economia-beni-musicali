@@ -1,0 +1,173 @@
+---
+/* Layout di base: topbar, sidebar, area contenuto (slot) e player persistente.
+   ClientRouter abilita le View Transitions (navigazione soft) così il player
+   resta vivo tra le pagine. */
+import { ClientRouter } from "astro:transitions";
+import { meta } from "../data/course";
+import { href } from "../lib/links";
+import Sidebar from "../components/Sidebar.astro";
+import Player from "../components/Player.astro";
+import "../styles/app.css";
+
+interface Props {
+  title: string;
+  /** Descrizione per <meta description> e anteprime social. Se assente usa un default. */
+  description?: string;
+  nav?: "home" | "music" | "maps" | "credits" | null;
+  activeTopic?: string;
+  /** Esclude la pagina dall'indicizzazione (es. risultati di ricerca). */
+  noindex?: boolean;
+}
+const {
+  title,
+  description,
+  nav = null,
+  activeTopic,
+  noindex = false,
+} = Astro.props;
+
+const fullTitle = `${title} · Economia dei Beni Musicali`;
+const defaultDescription = `${meta.course} (${meta.prof}, ${meta.university}). Mappa interattiva di argomenti, artisti e brani della storia della popular music, con appunti del corso e discografia ascoltabile.`;
+const metaDescription = description ?? defaultDescription;
+
+// URL assoluto della pagina corrente (canonical / og:url): Astro.site include già il base.
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+const ogImage = new URL(href("og.png"), Astro.site).href;
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Course",
+  name: meta.course,
+  description: defaultDescription,
+  url: canonical,
+  inLanguage: "it",
+  provider: {
+    "@type": "CollegeOrUniversity",
+    name: meta.university,
+  },
+};
+
+const navItems: { key: NonNullable<Props["nav"]>; label: string; path: string }[] = [
+  { key: "home", label: "Home", path: "" },
+  { key: "music", label: "Discografia", path: "music" },
+  { key: "maps", label: "Mappe", path: "maps" },
+  { key: "credits", label: "Crediti", path: "credits" },
+];
+const favicon =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232f5a86'/%3E%3Ctext x='16' y='22' font-family='Georgia,serif' font-size='18' font-weight='700' fill='%23fff' text-anchor='middle'%3EE%3C/text%3E%3C/svg%3E";
+---
+
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={metaDescription} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex, follow" />}
+    <meta name="author" content="Jacopo Sartini" />
+    <meta name="generator" content={Astro.generator} />
+
+    {/* Open Graph (Facebook, WhatsApp, Telegram, LinkedIn…) */}
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Economia dei Beni Musicali" />
+    <meta property="og:locale" content="it_IT" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={metaDescription} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+
+    {/* Twitter Card */}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={metaDescription} />
+    <meta name="twitter:image" content={ogImage} />
+
+    <link rel="icon" href={favicon} />
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+    <ClientRouter />
+  </head>
+  <body>
+    <header class="topbar">
+      <button id="menuToggle" type="button" title="Menu">☰</button>
+      <div class="brand">Elementi di Economia dei Beni Musicali<small>{meta.university}</small></div>
+      <div class="searchwrap">
+        <input
+          id="globalSearch"
+          placeholder="Cerca argomenti, artisti, brani, concetti…"
+          autocomplete="off"
+        />
+      </div>
+      <nav class="topnav">
+        {
+          navItems.map((n) => (
+            <a href={href(n.path)} data-nav={n.key} class={n.key === nav ? "active" : ""}>
+              {n.label}
+            </a>
+          ))
+        }
+      </nav>
+    </header>
+
+    <div class="layout">
+      <Sidebar activeTopic={activeTopic} />
+      <main id="view" class="view"><slot /></main>
+    </div>
+
+    <Player />
+
+    <div class="made-by" aria-label="Crediti autore">
+      <span
+        >Made with <span class="heart" aria-hidden="true">♥</span> by
+        <a href="https://jacoposartini.it" target="_blank" rel="noopener">Jacopo Sartini</a> · Giugno
+        2026 ·
+        <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noopener"
+          >GPL-3.0</a
+        ></span
+      >
+    </div>
+
+    <script>
+      import { navigate } from "astro:transitions/client";
+      import { href } from "../lib/links";
+
+      if (!(window as any).__uiInit) {
+        (window as any).__uiInit = true;
+
+        // Apri/chiudi i gruppi della sidebar (delegazione: gli elementi cambiano
+        // a ogni navigazione, il listener su document no).
+        document.addEventListener("click", (e) => {
+          const head = (e.target as HTMLElement).closest("[data-toggle]");
+          if (head) head.parentElement?.classList.toggle("open");
+          const menu = (e.target as HTMLElement).closest("#menuToggle");
+          if (menu) document.getElementById("sidebar")?.classList.toggle("show");
+        });
+
+        // Ricerca globale con debounce.
+        let timer: ReturnType<typeof setTimeout>;
+        const goSearch = (v: string) => {
+          if (v.trim().length >= 2) navigate(href("search") + "?q=" + encodeURIComponent(v.trim()));
+        };
+        document.addEventListener("input", (e) => {
+          const t = e.target as HTMLElement;
+          if (t.id !== "globalSearch") return;
+          const v = (t as HTMLInputElement).value;
+          clearTimeout(timer);
+          timer = setTimeout(() => goSearch(v), 220);
+        });
+        document.addEventListener("keydown", (e) => {
+          const t = e.target as HTMLElement;
+          if (t.id === "globalSearch" && (e as KeyboardEvent).key === "Enter") {
+            goSearch((t as HTMLInputElement).value);
+          }
+        });
+
+        // A ogni navigazione chiudi la sidebar mobile.
+        document.addEventListener("astro:page-load", () => {
+          document.getElementById("sidebar")?.classList.remove("show");
+        });
+      }
+    </script>
+  </body>
+</html>

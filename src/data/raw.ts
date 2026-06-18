@@ -1,11 +1,25 @@
+import type { RawData } from "./types";
+
 /* Contenuti tratti dagli appunti del corso e dal libro di F. Fabbri "Around the clock"
    + cap. "La musica nell'era digitale" + Programma (prof. S. Garino) + Ordinanza SIAE.
    q = query di ricerca YouTube; yt = id video (ove disponibile per riproduzione inline). */
-window.DATA = {
+export const DATA: RawData = {
   meta:{
     course:"Elementi di Economia dei beni musicali",
+    courseLink:"https://www.unimi.it/it/corsi/insegnamenti-dei-corsi-di-laurea/2026/elementi-di-economia-dei-beni-musicali-0",
     prof:"prof. Simone Garino",
-    university:"Università degli Studi di Milano · Informatica Musicale"
+    university:"Università degli Studi di Milano · Informatica Musicale",
+    textbook:{
+      author:"Franco Fabbri",
+      title:"Around the Clock. Una breve storia della popular music",
+      publisher:"UTET Università, Torino",
+      note:"Testo di riferimento del corso (con il capitolo «La musica nell'era digitale»).",
+      link:"https://www.utetlibri.it/libri/around-the-clock/"
+    },
+    sources:[
+      "Programma e appunti del corso (prof. Simone Garino)",
+      "Ordinanza di ripartizione SIAE"
+    ]
   },
   areas:[
     {id:"fond",  title:"Fondamenti & diritti", icon:"💶", color:"#a8455a", short:"Mercato, collecting, diritto d'autore, SIAE, streaming.", desc:"Le strutture economiche di base dell'industria musicale: chi produce e chi consuma, le società di collecting, il diritto d'autore, le ripartizioni SIAE e l'economia dello streaming."},
@@ -682,50 +696,32 @@ window.DATA = {
       edges:[
         {a:"ska",b:"reg"},{a:"reg",b:"dub"},{a:"dub",b:"hip"},{a:"reg",b:"pnk",label:"influenza"}
       ]}
-  ],
-
-  starterScalette:[
-    {id:"argomento-b",title:"Argomento a scelta · L'impatto del digitale (CD → iTunes)",
-      steps:[
-        {title:"Apertura + tesi",topic:"digitalizzazione",flow:"il bene fisico raggiunge l'apice proprio col CD…",
-          notes:"Il grammofono CREÒ il mercato trasformando la musica in bene vendibile; il digitale fa l'opposto, smaterializzandola: dall'era del POSSESSO a quella dell'ACCESSO (Fabbri). Annuncio le 3 fasi: CD → Napster → streaming.",songs:[]},
-        {title:"Il CD: apice del bene fisico, ma un paradosso",topic:"digitalizzazione",flow:"ma la qualità non era il vero valore: arriva Internet…",
-          notes:"1982-83 Philips/Sony; supera l'LP nel 1988. Boom da ri-acquisto del catalogo. PARADOSSO dell'alta fedeltà non necessaria (si vende qualità ma si ascolta in auto/cuffia). Collegamento: MTV e il videoclip come marketing; lo studio come strumento (Beatles/Eno).",songs:["thriller","videokilled"]},
-        {title:"Internet e la crisi: la pirateria",topic:"streaming-storia",flow:"il valore non sparisce, MIGRA: cui prodest?",
-          notes:"MP3 (Chiariglione, CSELT Torino) → Napster (causa RIAA/Metallica). Costo marginale 0 + bene non rivale → pirateria inevitabile. COLPO DA KO – «cui prodest?»: il valore migra a ISP, telecom, hardware. Collegamento storico: radio + Grande Crisi del '29 (il disco crollò, poi i DJ lo rilanciarono). La storia si ripete.",songs:["robots"]},
-        {title:"Dal possesso all'accesso",topic:"streaming-storia",flow:"e i diritti diventano finanza…",
-          notes:"iTunes 2003 (0,99$) ma Apple guadagna sugli iPod (come grammofono/radio agli inizi). YouTube/Spotify → il bene diventa servizio (riggancio il titolo del corso). Radiohead In Rainbows a offerta libera (2007). Pandora/Last.fm → profilazione → antenato di Spotify.",songs:["inrainbows"]},
-        {title:"Diritti, finanza e SIAE",topic:"streaming-econ",flow:"chiudo: la lezione della storia…",
-          notes:"Royalties piccole ma prevedibili → asset finanziario; vendita dei cataloghi (Dylan, Bowie, Bieber). SIAE 2025: streaming ripartito ANALITICAMENTE per numero di stream (ogni ascolto tracciato, contro il campionamento dell'era radio). Discovery mode = payola moderni; ghost artist (Liz Pelly).",songs:[]},
-        {title:"Chiusura",topic:"streaming-econ",flow:"",
-          notes:"Tesi di Fabbri: l'industria dovrebbe rileggere la propria storia — gli stessi conflitti tra media si ripetono, e i benefici nascono dalla libertà. Internet prometteva disintermediazione, ha creato intermediari più potenti (Spotify, Google). Frontiera: l'AI generativa — stesso schema, nuova scala.",songs:[]}
-      ]}
   ]
 };
 
 /* Video ID YouTube verificati per i brani in evidenza (riproduzione inline garantita).
    Gli altri brani usano la ricerca YouTube come fallback (sempre funzionante). */
 (function(){
-  var YT={
-    psycho:"cyLD9bydXEk",
-    personalitycrisis:"GbMmEI7aRlE", blitzkrieg:"268C3N2dDYk", godsavequeen:"yqrAPOZxgzU", whiteriot:"Xk00SETBlyA", owealiving:"qLDimN21S5M", publicimage:"rfpVsnqk80U", shecontrol:"CYA-KtCfN6Q", onceinlifetime:"5IsSpAOD6K8", aforest:"xik-y0xlpZ0", hongkong:"7gJx23P3w0c", planetrock:"9J3lwZjHenA", rapture:"pHCdS7O248g", micfiend:"uPfIIn5V_LQ", fuckpolice:"d_AnibvbFWs", jumpjimcrow:"T5FpKAxQNKU",
-    schizoid:"7OvW8Z7kiws", firthoffifth:"UjdNhtt3h7Q", roundabout:"cPCLFtxpadE", luckyman:"yRvljAT4O6Q", mooninjune:"IJFSIX_uVPM", impressioni:"DS76YKxiOKU", bancorip:"PfyzNl8a2Fg", arealuglio:"zy9B2xCW8ts", phaedra:"HIQ0dd7B_FU", vitaminc:"YmN9oHa3ZIQ", autobahn:"iukUMRlaBBE", heroes:"lXgkuM2NhYI", chinagirl:"fYPdEUBTArM", wannadog:"Uy2-5uDpu5Q", kickoutjams:"Nb__KOKUFw0",
-    revolution9:"SNdcFPjGsm8", theend:"12R4FzIhdoQ", reallygot:"EEJVwzI3w78", mygeneration:"qN5zw04WxCc", believer:"i6cjGbDr4_M", wouldntnice:"-LeE86jZEXo", freedom:"rynxqdNMry4", whiterabbit:"pnJM_jC7j_4", starspangled:"sjzZh6-h9fM", watchtower:"TLV4_xaYynY", pipergates:"7A2IzRXwVvY", ironman:"qRcYjJQ0JHg", shockmonkey:"elBeF8xlu0c", inrainbows:"GoLJJRIWCLU",
-    tuvuofa:"6vYcQaWdhm4", cieloinunastanza:"VkLxROfo2AA", ciaoamoreciao:"E2oaSgLdAAk", bellaciao:"4CI3lhyNKfo", "24milabaci":"Czeq3UPIz0U", larmando:"U74yps9oeKs", lamer:"tKOpxCP5TGM", vieenrose:"-0KvBnIvTFs", feuillesmortes:"Xo1C6E7jbPw", sheloves:"nGbWU8S3vzs", hardday:"Yjyj8qnqkYI", iffell:"F_80s6S_7Vw", inmylife:"YBcdt6DsLQA", tomorrownever:"pHNbHn3i9S4",
-    georgia:"ggGzE5KfCio", iwantyouback:"79eyuz8z6Cg", babylove:"9_y6nFjoVp4", papasbag:"QE5D2hJhacU", dockbay:"rTVjnBo96Ug", sixtyminute:"pJbDHw_qsFs", jailhouse:"gj0Rz-uP4Mk", thatlbe:"-868M2k7Puo", spellonyou:"82cdnAUvsw8", blowin:"MMFj8uDubsE", leggendapiave:"llloLXJvy4Y", tammurriata:"_sbDAKMecZI", crapapelada:"qckWhsw-RZM", chebambola:"DCNcHUDPBLo",
+  const YT: Record<string,string> = {
+    psycho:"eKjuCf8eIVk",
+    personalitycrisis:"GbMmEI7aRlE", blitzkrieg:"268C3N2dDYk", godsavequeen:"yqrAPOZxgzU", whiteriot:"Xk00SETBlyA", owealiving:"qLDimN21S5M", publicimage:"rIAZ8unRm2c", shecontrol:"s4prQ11orEM", onceinlifetime:"5IsSpAOD6K8", aforest:"xik-y0xlpZ0", hongkong:"Y-l9GQJRl9Y", planetrock:"9J3lwZjHenA", rapture:"pHCdS7O248g", micfiend:"uPfIIn5V_LQ", fuckpolice:"d_AnibvbFWs", jumpjimcrow:"T5FpKAxQNKU",
+    schizoid:"7OvW8Z7kiws", firthoffifth:"Rz-tHZEr37I", roundabout:"cPCLFtxpadE", luckyman:"yRvljAT4O6Q", mooninjune:"IJFSIX_uVPM", impressioni:"tpOybQsDzoM", bancorip:"PfyzNl8a2Fg", arealuglio:"zy9B2xCW8ts", phaedra:"IFbbA2LFEvo", vitaminc:"YmN9oHa3ZIQ", autobahn:"vkOZNJYAZ7c", heroes:"lXgkuM2NhYI", chinagirl:"slU0PSJedbU", wannadog:"Uy2-5uDpu5Q", kickoutjams:"Nb__KOKUFw0",
+    revolution9:"SNdcFPjGsm8", theend:"12R4FzIhdoQ", reallygot:"EEJVwzI3w78", mygeneration:"qN5zw04WxCc", believer:"i6cjGbDr4_M", wouldntnice:"-LeE86jZEXo", freedom:"rynxqdNMry4", whiterabbit:"pnJM_jC7j_4", starspangled:"sjzZh6-h9fM", watchtower:"TLV4_xaYynY", pipergates:"8UbNbor3OqQ", ironman:"pOfBdvuky1s", shockmonkey:"elBeF8xlu0c", inrainbows:"GoLJJRIWCLU",
+    tuvuofa:"ARRKNB07Ixc", cieloinunastanza:"x8YkoHWVb-Q", ciaoamoreciao:"ptzahu0fcyA", bellaciao:"4CI3lhyNKfo", "24milabaci":"Czeq3UPIz0U", larmando:"U74yps9oeKs", lamer:"lJuK3NLaC1Y", vieenrose:"-0KvBnIvTFs", feuillesmortes:"Xo1C6E7jbPw", sheloves:"nGbWU8S3vzs", hardday:"Yjyj8qnqkYI", iffell:"F_80s6S_7Vw", inmylife:"YBcdt6DsLQA", tomorrownever:"pHNbHn3i9S4",
+    georgia:"ggGzE5KfCio", iwantyouback:"79eyuz8z6Cg", babylove:"D6QF4sB40gU", papasbag:"M7DNkovC2Tk", dockbay:"rTVjnBo96Ug", sixtyminute:"pJbDHw_qsFs", jailhouse:"PpsUOOfb-vE", thatlbe:"M4TfFTmITLo", spellonyou:"82cdnAUvsw8", blowin:"MMFj8uDubsE", leggendapiave:"llloLXJvy4Y", tammurriata:"_sbDAKMecZI", crapapelada:"NLflIuBvR4k", chebambola:"cXx8PdQY07w",
     thisland:"wxiMrvDbq3s", lespaul:"NkGf1GHAxhE", mapleleaf:"zMVlICUZzfg", entertainer:"TSoXBkF832I", stlouis:"Sllp2C6NKDw", seeseerider:"7L1hE3Qhv7E", ponyblues:"_xWqtiFJKfs", crossroad:"Kxi4XkIVWLQ", liverystable:"5WojNaU4-kI", whitechristmas:"gB3A9tUBoWs", flymemoon:"JYuyWrkwpok", platterssmoke:"wG4mDo8QwAI", bemybaby:"jSPpbOGnFgk", changegonnacome:"wEBlaMOmKV4",
-    lorca:"w1FQd76fI3A", chegade:"k2WctARV8Dc", desafinado:"tcZtakKdR-E", masquenada:"5r9X-iQfJ44", tropicalia:"tn9KnK0DZCc", vivirenpaz:"XkXise2bHE0", elcantante:"KfjB690ZTD4", bananaboat:"71fi-cBX3Ks", skaravan:"-B47nidCpr0", mylifebush:"ARmKfoEm6BM", graceland:"GP6a-7MP91g", sledgehammer:"LpY28vetocE", caruso:"PG7kpfbUCgs",
-    tevoglio:"aj4Qkfm-hvA", pinafore:"n9VaDlbpAeI", smokeeyes:"KJGBjVwisSI", allthings:"9nJvHsq0zjY", nightday:"diUGIA1EmNk", frango:"-5BvAst7jEg", ummkulthum:"XPGHpBOt5sE", entredos:"2oyhlad64-s", leyendatiempo:"LhTUzleCwZc", barconegro:"8inwZrpgBIM", porunacabeza:"Gcxv7i02lXc",
-    funiculi:"G_Ew9cTr35o", osolemio:"eQSNVBLTXYY", ohsusanna:"qSIj17xbAyk", alexander:"xppMR3QVmQI", mackknife:"X7eO7MKEZAY", summertime:"FXk2zvL6v8M", myfavorite:"2gyGzz7Zi9E", blueskies:"r0jVSMKV2-E", tara:"rYbpEVBKbjU", anatomy:"cntm7j6R1G0",
+    lorca:"w1FQd76fI3A", chegade:"Y0a0QuLEC8A", desafinado:"bp2QFbOtkSM", masquenada:"5r9X-iQfJ44", tropicalia:"1Z1qNsm-NUk", vivirenpaz:"XkXise2bHE0", elcantante:"KfjB690ZTD4", bananaboat:"DYYkJ0kwNss", skaravan:"49q36ZayOGc", mylifebush:"ARmKfoEm6BM", graceland:"GP6a-7MP91g", sledgehammer:"LpY28vetocE", caruso:"PG7kpfbUCgs",
+    tevoglio:"7mmcjqim7nc", pinafore:"n9VaDlbpAeI", smokeeyes:"KJGBjVwisSI", allthings:"9nJvHsq0zjY", nightday:"diUGIA1EmNk", frango:"-5BvAst7jEg", ummkulthum:"6YjW05dqec8", entredos:"sQFEG84gOqo", leyendatiempo:"0usfxEYijXY", barconegro:"H8n-e8LLetk", porunacabeza:"Gcxv7i02lXc",
+    funiculi:"G_Ew9cTr35o", osolemio:"eQSNVBLTXYY", ohsusanna:"qSIj17xbAyk", alexander:"xppMR3QVmQI", mackknife:"X7eO7MKEZAY", summertime:"FXk2zvL6v8M", myfavorite:"0IagRZBvLtw", blueskies:"r0jVSMKV2-E", tara:"rYbpEVBKbjU", anatomy:"egmoun29mrs",
     videokilled:"W8r-tXRLazs", thriller:"sOnqjkJTMaA", billiejean:"Zi_XLOBDo_Y",
     stayinalive:"I_izvAbhExY", robots:"9plTe80SosA", loveteartus:"zuuObGsB0No",
-    themessage:"PobrSpMwKk4", likerolling:"IwOfCgkyEj0", rollover:"EOrMg3pY7hw",
+    themessage:"PobrSpMwKk4", likerolling:"IwOfCgkyEj0", rollover:"xCNl9KWy2No",
     rockclock:"ZgdufzXvjqw", heartbreak:"e9BLw4W5KU8", dayinlife:"usNsCeOV4GM",
     goodvibrations:"apBWI6xrbLY", anarchyuk:"cBojbjoMttI", londoncalling:"EfK-WX2pa8c",
     satisfaction:"nrIPxlFzDi0", whatsgoingon:"o5TmORitlKk", spaceoddity:"iYYRH4apXDo",
-    volare:"7wWiC0e3b2I", libertango:"yvtpT1ARF1o", ipanema:"c5QfXjsoNe4",
-    ishotmarley:"sG52YAe8Crg", walkthisway:"4B_UYYPb-Gk", rappersdelight:"mcCK99wHrk0",
+    volare:"6jWsIpAbo-8", libertango:"yvtpT1ARF1o", ipanema:"s61-e29Vr6Q",
+    ishotmarley:"oe2hdbft5-U", walkthisway:"4B_UYYPb-Gk", rappersdelight:"mcCK99wHrk0",
     superstition:"7_tmeHCO1IM"
   };
-  window.DATA.songs.forEach(function(s){ if(YT[s.id]) s.yt=YT[s.id]; });
+  DATA.songs.forEach(function(s){ if(YT[s.id]) s.yt=YT[s.id]; });
 })();

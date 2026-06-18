@@ -1,0 +1,27 @@
+---
+/* Un nodo cliccabile di una mappa: rettangolo + etichetta su 1-2 righe.
+   Se ha topic/area è un link SVG vero (niente JS), altrimenti un <g> statico. */
+import { nodeShape } from "../lib/mapgeom";
+import { href } from "../lib/links";
+
+interface Props {
+  x: number;
+  y: number;
+  label: string;
+  color: string;
+  topic?: string;
+  area?: string;
+  hub?: boolean;
+}
+const { x, y, label, color, topic, area, hub = false } = Astro.props;
+const { w, h, rx, lines } = nodeShape(label, hub);
+const link = topic ? href("topic/" + topic) : area ? href("area/" + area) : null;
+---
+
+{link ? <a href={link} class="node-link"><g class="node">
+  <rect x={x - w / 2} y={y - h / 2} width={w} height={h} rx={rx} fill={color} />
+  {lines.map((l) => <text x={x} y={y + l.dy} text-anchor="middle">{l.text}</text>)}
+</g></a> : <g class="node">
+  <rect x={x - w / 2} y={y - h / 2} width={w} height={h} rx={rx} fill={color} />
+  {lines.map((l) => <text x={x} y={y + l.dy} text-anchor="middle">{l.text}</text>)}
+</g>}

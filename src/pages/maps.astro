@@ -1,0 +1,39 @@
+---
+import Base from "../layouts/Base.astro";
+import { areas, maps } from "../data/course";
+import { inlineRefs } from "../lib/content";
+import FlowMap from "../components/FlowMap.astro";
+import RadialMap from "../components/RadialMap.astro";
+---
+
+<Base
+  title="Mappe concettuali"
+  nav="maps"
+  description="Mappe concettuali che collegano generi, tecnologie, artisti ed eventi della storia della popular music, dai precursori ottocenteschi all'era digitale."
+>
+  <h1 class="title">Mappe concettuali</h1>
+  <div class="lead">
+    Clicca un nodo per saltare all'argomento. Le mappe tematiche mostrano i
+    collegamenti trasversali utili all'orale; in fondo trovi una mappa per ciascuna area.
+  </div>
+
+  {
+    maps.map((m) => (
+      <>
+        <h2>{m.title}</h2>
+        {m.desc && <p class="sub" set:html={inlineRefs(m.desc)} />}
+        <FlowMap map={m} />
+      </>
+    ))
+  }
+
+  <h2>Mappe per area</h2>
+  {
+    areas.map((a) => (
+      <>
+        <h3>{a.title}</h3>
+        <RadialMap area={a} />
+      </>
+    ))
+  }
+</Base>

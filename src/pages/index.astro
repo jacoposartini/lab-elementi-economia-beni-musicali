@@ -1,0 +1,68 @@
+---
+import Base from "../layouts/Base.astro";
+import { areas, topics, songs, maps, topicsOfArea } from "../data/course";
+import { href } from "../lib/links";
+
+const chips = [
+  `${topics.length} argomenti`,
+  `${songs.length} brani in discografia`,
+  `${areas.length} aree tematiche`,
+  `${maps.length + areas.length} mappe concettuali`,
+];
+const shortcuts = [
+  {
+    path: "music",
+    title: "Discografia",
+    desc: "Tutti i brani citati, filtrabili per genere, decennio e area, ordinabili cronologicamente.",
+  },
+  {
+    path: "maps",
+    title: "Mappe concettuali",
+    desc: "Genealogie dei generi, catena tecnologica, dirompenza del digitale. Clicca i nodi per approfondire.",
+  },
+  {
+    path: "credits",
+    title: "Crediti & fonti",
+    desc: "Bibliografia, attribuzioni e note sull'uso didattico dei contenuti.",
+  },
+];
+---
+
+<Base
+  title="Laboratorio"
+  nav="home"
+  description="Una breve storia della popular music in mappe interattive: argomenti, artisti e brani del corso di Elementi di Economia dei Beni Musicali, con appunti e discografia ascoltabile."
+>
+  <h1 class="title">Laboratorio · Economia dei beni musicali</h1>
+  <div class="lead">
+    Naviga il programma e ascolta i brani mentre approfondisci gli argomenti.
+  </div>
+  <div class="chips">
+    {chips.map((c) => <span class="chip">{c}</span>)}
+  </div>
+
+  <h2>Aree del programma</h2>
+  <div class="grid">
+    {
+      areas.map((a) => (
+        <a class="card" href={href("area/" + a.id)} style={`border-top:3px solid ${a.color}`}>
+          <h3>{a.title}</h3>
+          <p>{a.short || ""}</p>
+          <div class="cnt">{topicsOfArea(a.id).length} argomenti</div>
+        </a>
+      ))
+    }
+  </div>
+
+  <h2>Scorciatoie</h2>
+  <div class="grid">
+    {
+      shortcuts.map((s) => (
+        <a class="card" href={href(s.path)}>
+          <h3>{s.title}</h3>
+          <p>{s.desc}</p>
+        </a>
+      ))
+    }
+  </div>
+</Base>

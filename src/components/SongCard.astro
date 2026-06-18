@@ -1,0 +1,56 @@
+---
+/* Scheda di un brano. Il bottone play non incorpora più la coda: al click un
+   listener delegato (vedi Player.astro) ricava la coda dai brani visibili nel
+   contenitore [data-songlist] genitore, così le card restano statiche e DRY. */
+import { songById, topicById } from "../data/course";
+import { href } from "../lib/links";
+import { ytSearchUrl } from "../lib/youtube";
+
+interface Props {
+  id: string;
+}
+const { id } = Astro.props;
+const s = songById[id];
+const topic = s?.topic ? topicById[s.topic] : undefined;
+---
+
+{
+  s && (
+    <div
+      class="song"
+      data-song={s.id}
+      data-title={s.title}
+      data-artist={s.artist || ""}
+      data-genre={s.genre || ""}
+      data-decade={s.decade || ""}
+      data-year={s.year ?? ""}
+      data-area={topic?.area || ""}
+      data-country={s.country || ""}
+    >
+      <button class="play" type="button" title="Ascolta" data-play={s.id}>
+        ▶
+      </button>
+      <div class="meta">
+        <div class="ttl">{s.title}</div>
+        <div class="sub">
+          {(s.artist || "") + (s.year ? " · " + s.year : "")}
+        </div>
+      </div>
+      {s.genre && <span class="gtag">{s.genre}</span>}
+      {topic && (
+        <a class="ext" href={href("topic/" + topic.id)} title="Vai all'argomento">
+          →
+        </a>
+      )}
+      <a
+        class="ext"
+        href={ytSearchUrl(s)}
+        target="_blank"
+        rel="noopener"
+        title="Apri su YouTube"
+      >
+        ↗
+      </a>
+    </div>
+  )
+}

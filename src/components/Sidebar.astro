@@ -1,0 +1,38 @@
+---
+/* Sidebar: aree espandibili con i rispettivi argomenti. L'argomento attivo e
+   l'apertura del suo gruppo sono renderizzati lato server; l'apertura/chiusura
+   manuale è gestita via delegazione client (vedi Base.astro). */
+import { areas, topicsOfArea, topicById } from "../data/course";
+import { href } from "../lib/links";
+
+interface Props {
+  activeTopic?: string;
+}
+const { activeTopic } = Astro.props;
+const activeArea = activeTopic ? topicById[activeTopic]?.area : undefined;
+---
+
+<aside id="sidebar" class="sidebar">
+  {
+    areas.map((a) => (
+      <div class={`area-group${a.id === activeArea ? " open" : ""}`} data-area={a.id}>
+        <div class="area-head" data-toggle>
+          <span class="dot" style={`background:${a.color}`} />
+          <span>{a.title}</span>
+          <span class="ico">▸</span>
+        </div>
+        <div class="area-topics">
+          {topicsOfArea(a.id).map((t) => (
+            <a
+              class={`t-link${t.id === activeTopic ? " active" : ""}`}
+              data-t={t.id}
+              href={href("topic/" + t.id)}
+            >
+              {t.title}
+            </a>
+          ))}
+        </div>
+      </div>
+    ))
+  }
+</aside>

@@ -1,0 +1,37 @@
+---
+/* Rende l'array di blocchi (h/p/ul/quote/note/song) del corpo di un argomento. */
+import type { Block } from "../data/types";
+import { inlineRefs } from "../lib/content";
+import SongCard from "./SongCard.astro";
+
+interface Props {
+  blocks?: Block[];
+}
+const { blocks = [] } = Astro.props;
+---
+
+{
+  blocks.map((b) => {
+    if (b.t === "h") return <h3>{b.x}</h3>;
+    if (b.t === "p") return <p set:html={inlineRefs(b.x)} />;
+    if (b.t === "ul")
+      return (
+        <ul>
+          {b.x.map((li) => (
+            <li set:html={inlineRefs(li)} />
+          ))}
+        </ul>
+      );
+    if (b.t === "quote")
+      return (
+        <blockquote>
+          <Fragment set:html={inlineRefs(b.x)} />
+          {b.cite && <cite>{"— " + b.cite}</cite>}
+        </blockquote>
+      );
+    if (b.t === "note")
+      return <div class="note" set:html={"<b>Nota.</b> " + inlineRefs(b.x)} />;
+    if (b.t === "song") return <SongCard id={b.x} />;
+    return null;
+  })
+}

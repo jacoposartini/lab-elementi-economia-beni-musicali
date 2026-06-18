@@ -23,7 +23,8 @@
   --shadow2:0 6px 24px rgba(28,24,16,.10);
 }
 *{box-sizing:border-box}
-html,body{margin:0;height:100%}
+html{height:100%}
+body{margin:0;min-height:100%}
 body{
   background:var(--bg); color:var(--txt);
   font:15.5px/1.6 var(--sans);
@@ -99,6 +100,7 @@ blockquote cite{display:block;margin-top:6px;color:var(--mut);font-style:normal;
 .songs-wrap{margin:16px 0}
 .song{display:flex;align-items:center;gap:13px;background:var(--bg3);border:1px solid var(--line);
   border-radius:10px;padding:9px 13px;margin:8px 0;box-shadow:var(--shadow);transition:border-color .12s,box-shadow .12s}
+.song[hidden]{display:none}
 .song:hover{border-color:var(--line2);box-shadow:var(--shadow2)}
 .song .play{flex:0 0 auto;width:36px;height:36px;border-radius:50%;border:none;background:var(--acc);color:#fff;font-size:13px;display:grid;place-items:center;transition:background .12s}
 .song .play:hover{background:var(--acc-d)}
@@ -140,29 +142,11 @@ svg.map{display:block;min-width:100%}
 .node text{fill:#1c1a16;font-weight:600;font-size:12px;pointer-events:none}
 .node:hover rect,.node:hover circle{filter:brightness(1.06)}
 
-/* ---------- scalette ---------- */
-.sc-list{display:flex;flex-direction:column;gap:10px;margin:16px 0}
-.sc-item{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:14px 16px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow)}
-.sc-item h3{font-family:var(--serif);margin:0;flex:1;font-size:17px;font-weight:600}
+/* ---------- buttons (player fallback) ---------- */
 .btn{background:var(--acc);color:#fff;border:none;border-radius:8px;padding:9px 15px;font-weight:600;font-size:14px;transition:background .12s}
 .btn:hover{background:var(--acc-d)}
 .btn.ghost{background:var(--bg3);color:var(--txt2);border:1px solid var(--line2)}
 .btn.ghost:hover{background:var(--bg2);border-color:var(--mut)}
-.btn.sm{padding:6px 11px;font-size:13px}
-.step{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:13px 15px;margin:10px 0;box-shadow:var(--shadow)}
-.step .row{display:flex;align-items:center;gap:9px}
-.step .num{width:26px;height:26px;border-radius:50%;background:var(--acc);color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px;flex:0 0 auto}
-.step input.st-title{flex:1;background:transparent;border:none;color:var(--txt);font-size:16px;font-weight:600;outline:none;border-bottom:1px dashed transparent}
-.step input.st-title:focus{border-bottom-color:var(--line2)}
-.step textarea{width:100%;margin-top:9px;background:var(--bg);color:var(--txt2);border:1px solid var(--line2);border-radius:8px;padding:9px;resize:vertical;min-height:54px;font:inherit;outline:none}
-.step textarea:focus{border-color:var(--acc)}
-.step .tools{display:flex;gap:6px;align-items:center}
-.step .iconbtn{background:var(--bg3);border:1px solid var(--line2);color:var(--mut);border-radius:7px;padding:4px 9px}
-.step .iconbtn:hover{color:var(--acc);border-color:var(--acc)}
-.linkflow{color:var(--acc);font-size:12px;text-align:center;margin:-2px 0 6px;font-style:italic}
-.picker{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
-.adders{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:16px 0}
-.adders select{background:var(--bg3);color:var(--txt);border:1px solid var(--line2);border-radius:8px;padding:8px;font-size:14px}
 
 /* ---------- player ---------- */
 .player{position:fixed;left:0;right:0;bottom:0;background:#ffffff;border-top:1px solid var(--line2);
@@ -181,6 +165,22 @@ svg.map{display:block;min-width:100%}
 .player iframe{width:100%;height:240px;border:0;display:block}
 .player .noembed{height:240px;display:flex;flex-direction:column;gap:14px;align-items:center;justify-content:center;text-align:center;color:#cdd;padding:20px;background:#15171c}
 .player .noembed .btn{text-decoration:none}
+
+/* ---------- "made by" sticker (pill in basso a destra, fissa e persistente) ---------- */
+.made-by{position:fixed;right:14px;bottom:14px;display:inline-flex;align-items:center;gap:4px;
+  background:rgba(255,255,255,.62);backdrop-filter:saturate(1.2) blur(6px);
+  border:1px solid var(--line);color:var(--mut);
+  border-radius:999px;padding:5px 11px;
+  font-family:var(--sans);font-size:11px;font-weight:500;letter-spacing:.2px;
+  box-shadow:var(--shadow);z-index:45;user-select:none;opacity:.5;
+  transition:opacity .2s ease,box-shadow .2s ease}
+.made-by:hover{opacity:1;box-shadow:var(--shadow2)}
+.made-by a{color:var(--mut);font-weight:600;text-decoration:none}
+.made-by:hover a{color:var(--acc)}
+.made-by a:hover{text-decoration:underline;text-underline-offset:2px}
+.made-by .heart{color:#d56a7a;font-size:11px}
+/* si toglie di mezzo quando il player è aperto (player a tutta larghezza in basso) */
+#player:not(.hidden) ~ .made-by{opacity:0;transform:translateY(10px);pointer-events:none}
 
 .empty{color:var(--mut);text-align:center;padding:48px;font-style:italic}
 .hl{background:var(--hl);border-radius:3px;padding:0 2px}
@@ -202,15 +202,16 @@ svg.map{display:block;min-width:100%}
   .brand small{display:none}
   .view{padding:22px 18px 170px}
   h1.title{font-size:26px}
+  .made-by{display:none}
 }
 
-/* ---------- print (clean output for scalette) ---------- */
+/* ---------- print (clean output) ---------- */
 @media print{
-  .topbar,.sidebar,.player,.adders,.toolbar,.step .tools,.linkflow input,#menuToggle{display:none!important}
+  .topbar,.sidebar,.player,.toolbar,.made-by,#menuToggle{display:none!important}
   body{background:#fff;color:#000;font-size:12pt}
   .layout{display:block}
   .view{max-width:none;padding:0;margin:0}
-  .step,.sc-item,.card,.song{box-shadow:none;border-color:#bbb;break-inside:avoid}
+  .card,.song{box-shadow:none;border-color:#bbb;break-inside:avoid}
   a{color:#000;text-decoration:none}
   h1.title,.view h2,.view h3{color:#000}
 }

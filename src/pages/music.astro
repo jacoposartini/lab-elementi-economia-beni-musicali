@@ -1,0 +1,186 @@
+---
+import Base from "../layouts/Base.astro";
+import { songs, areas } from "../data/course";
+import SongCard from "../components/SongCard.astro";
+
+const genres = Array.from(new Set(songs.map((s) => s.genre).filter(Boolean))).sort() as string[];
+const decades = Array.from(new Set(songs.map((s) => s.decade).filter(Boolean))).sort() as string[];
+// Ordine iniziale (anno crescente) = stato di default della toolbar.
+const initial = [...songs].sort((a, b) => (a.year ?? 9999) - (b.year ?? 9999));
+---
+
+<Base
+  title="Discografia"
+  nav="music"
+  description="La discografia del corso: i brani che hanno fatto la storia della popular music, dalla canzone napoletana allo streaming, ascoltabili e collegati agli argomenti."
+>
+  <h1 class="title">Discografia</h1>
+  <div class="lead">
+    Tutti i brani citati nel corso. Filtra per genere/decennio/area, ordina
+    cronologicamente, e ascolta: il player resta attivo mentre approfondisci gli argomenti.
+  </div>
+
+  <div class="toolbar" id="musicToolbar">
+    <select id="fGenre">
+      <option value="">Tutti i generi</option>
+      {genres.map((g) => <option value={g}>{g}</option>)}
+    </select>
+    <select id="fDecade">
+      <option value="">Tutti i decenni</option>
+      {decades.map((d) => <option value={d}>{d}</option>)}
+    </select>
+    <select id="fArea">
+      <option value="">Tutte le aree</option>
+      {areas.map((a) => <option value={a.id}>{a.title}</option>)}
+    </select>
+    <select id="fSort">
+      <option value="year">Ordina: Anno</option>
+      <option value="artist">Ordina: Artista</option>
+      <option value="title">Ordina: Titolo</option>
+      <option value="genre">Ordina: Genere</option>
+    </select>
+    <button
+      class="pbtn"
+      id="fDir"
+      type="button"
+      style="background:var(--bg3);border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:7px 11px"
+      >↑</button
+    >
+    <input id="fQuery" placeholder="filtra…" />
+    <div class="seg" id="fGroup">
+      <button type="button" class="on" data-group="false">Lista</button>
+      <button type="button" data-group="true">Per artista</button>
+    </div>
+    <span class="count" id="fCount">{songs.length} brani</span>
+  </div>
+
+  <div id="musicList" class="songs-wrap" data-songlist>
+    {initial.map((s) => <SongCard id={s.id} />)}
+  </div>
+</Base>
+
+<script>
+  document.addEventListener("astro:page-load", () => {
+    const list = document.getElementById("musicList");
+    if (!list) return; // siamo su un'altra pagina
+
+    const cards = Array.from(list.querySelectorAll<HTMLElement>(".song"));
+    const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+    const genreSel = $<HTMLSelectElement>("fGenre");
+    const decadeSel = $<HTMLSelectElement>("fDecade");
+    const areaSel = $<HTMLSelectElement>("fArea");
+    const sortSel = $<HTMLSelectElement>("fSort");
+    const dirBtn = $<HTMLButtonElement>("fDir");
+    const queryIn = $<HTMLInputElement>("fQuery");
+    const groupSeg = $<HTMLElement>("fGroup");
+    const count = $<HTMLElement>("fCount");
+
+    const state = { genre: "", decade: "", area: "", sort: "year", dir: 1, q: "", group: false };
+
+    function val(c: HTMLElement, k: string) {
+      return c.dataset[k] || "";
+    }
+
+    function apply() {
+      list!.querySelectorAll(".artist-h, .empty").forEach((n) => n.remove());
+
+      let shown = cards.filter((c) => {
+        if (state.genre && val(c, "genre") !== state.genre) return false;
+        if (state.decade && val(c, "decade") !== state.decade) return false;
+        if (state.area && val(c, "area") !== state.area) return false;
+        if (state.q) {
+          const hay = (
+            val(c, "title") +
+            " " +
+            val(c, "artist") +
+            " " +
+            val(c, "genre") +
+            " " +
+            val(c, "country")
+          ).toLowerCase();
+          if (hay.indexOf(state.q) < 0) return false;
+        }
+        return true;
+      });
+
+      const k = state.sort;
+      shown.sort((a, b) => {
+        if (k === "year") {
+          const ya = +(val(a, "year") || 9999);
+          const yb = +(val(b, "year") || 9999);
+          return (ya - yb) * state.dir;
+        }
+        return val(a, k).localeCompare(val(b, k)) * state.dir;
+      });
+
+      // i nascosti restano in coda al DOM (così tornano disponibili ai filtri)
+      const hidden = cards.filter((c) => !shown.includes(c));
+      hidden.forEach((c) => c.setAttribute("hidden", ""));
+      shown.forEach((c) => c.removeAttribute("hidden"));
+
+      const frag = document.createDocumentFragment();
+      if (!shown.length) {
+        const empty = document.createElement("div");
+        empty.className = "empty";
+        empty.textContent = "Nessun brano con questi filtri.";
+        frag.appendChild(empty);
+      } else if (state.group) {
+        const groups: Record<string, HTMLElement[]> = {};
+        shown.forEach((c) => {
+          const a = val(c, "artist") || "—";
+          (groups[a] = groups[a] || []).push(c);
+        });
+        Object.keys(groups)
+          .sort()
+          .forEach((artist) => {
+            const h = document.createElement("div");
+            h.className = "artist-h";
+            h.textContent = artist + " · " + groups[artist].length;
+            frag.appendChild(h);
+            groups[artist].forEach((c) => frag.appendChild(c));
+          });
+      } else {
+        shown.forEach((c) => frag.appendChild(c));
+      }
+      hidden.forEach((c) => frag.appendChild(c));
+      list!.appendChild(frag);
+      count.textContent = shown.length + " brani";
+    }
+
+    genreSel.addEventListener("change", () => {
+      state.genre = genreSel.value;
+      apply();
+    });
+    decadeSel.addEventListener("change", () => {
+      state.decade = decadeSel.value;
+      apply();
+    });
+    areaSel.addEventListener("change", () => {
+      state.area = areaSel.value;
+      apply();
+    });
+    sortSel.addEventListener("change", () => {
+      state.sort = sortSel.value;
+      apply();
+    });
+    dirBtn.addEventListener("click", () => {
+      state.dir *= -1;
+      dirBtn.textContent = state.dir > 0 ? "↑" : "↓";
+      apply();
+    });
+    queryIn.addEventListener("input", () => {
+      state.q = queryIn.value.toLowerCase();
+      apply();
+    });
+    groupSeg.querySelectorAll<HTMLButtonElement>("button").forEach((b) => {
+      b.addEventListener("click", () => {
+        state.group = b.dataset.group === "true";
+        groupSeg.querySelectorAll("button").forEach((x) => x.classList.remove("on"));
+        b.classList.add("on");
+        apply();
+      });
+    });
+
+    apply();
+  });
+</script>

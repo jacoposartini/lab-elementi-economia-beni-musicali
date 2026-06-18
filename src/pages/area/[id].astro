@@ -1,0 +1,37 @@
+---
+import Base from "../../layouts/Base.astro";
+import { areas, areaById, topicsOfArea } from "../../data/course";
+import { href } from "../../lib/links";
+import RadialMap from "../../components/RadialMap.astro";
+
+export function getStaticPaths() {
+  return areas.map((a) => ({ params: { id: a.id } }));
+}
+
+const { id } = Astro.params;
+const a = areaById[id!];
+const areaTopics = topicsOfArea(id!);
+---
+
+<Base title={a.title} description={a.desc ?? a.short}>
+  <div class="crumb">
+    <a href={href()}>Home</a> › {a.title}
+  </div>
+  <h1 class="title">{a.title}</h1>
+  {a.desc && <div class="lead">{a.desc}</div>}
+
+  <div class="grid">
+    {
+      areaTopics.map((t) => (
+        <a class="card" href={href("topic/" + t.id)} style={`border-left:3px solid ${a.color}`}>
+          <h3>{t.title}</h3>
+          <p>{t.lead || ""}</p>
+          <div class="cnt">{t.songs?.length ?? 0} brani</div>
+        </a>
+      ))
+    }
+  </div>
+
+  <h2>Mappa dell'area</h2>
+  <RadialMap area={a} />
+</Base>

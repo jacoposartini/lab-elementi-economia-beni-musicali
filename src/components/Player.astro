@@ -1,0 +1,234 @@
+---
+/* Player YouTube persistente con coda. Il markup ha transition:persist così
+   l'iframe sopravvive alle navigazioni (View Transitions) e la riproduzione non
+   si interrompe passando da un argomento all'altro. Porta player.js. */
+---
+
+<div id="player" class="player hidden" transition:persist="player">
+  <div class="bar">
+    <button class="pbtn" id="pToggle" type="button" title="Mostra/Nascondi video">▾</button>
+    <button class="pbtn" id="pPrev" type="button" title="Precedente">⏮</button>
+    <button class="pbtn" id="pPlay" type="button" title="Pausa">⏸</button>
+    <button class="pbtn" id="pNext" type="button" title="Successiva">⏭</button>
+    <div class="pmeta">
+      <div class="pttl" id="pTtl">—</div>
+      <div class="psub" id="pSub"></div>
+    </div>
+    <span class="pqi" id="pQi"></span>
+    <a class="pbtn" id="pOpen" target="_blank" rel="noopener" title="Apri su YouTube">YouTube ↗</a>
+    <button class="pbtn" id="pClose" type="button" title="Chiudi">✕</button>
+  </div>
+  <div class="frame"><div id="pFrame"></div></div>
+</div>
+
+<script>
+  import { songById } from "../data/course";
+  import { ytSearchUrl, ytWatchUrl } from "../lib/youtube";
+
+  // Evita doppia inizializzazione se lo script venisse rieseguito.
+  if (!(window as any).__playerInit) {
+    (window as any).__playerInit = true;
+
+    const $ = (s: string) => document.querySelector<HTMLElement>(s)!;
+
+    const P = {
+      box: () => $("#player"),
+      frame: () => $("#pFrame"),
+      current: null as string | null,
+      queue: [] as string[],
+      idx: -1,
+    };
+
+    let ytPlayer: any = null;
+    let ytApiReady = false;
+    let ytPending: (() => void) | null = null;
+
+    (window as any).onYouTubeIframeAPIReady = function () {
+      ytApiReady = true;
+      if (ytPending) {
+        const fn = ytPending;
+        ytPending = null;
+        fn();
+      }
+    };
+    (function loadYtApi() {
+      const s = document.createElement("script");
+      s.src = "https://www.youtube.com/iframe_api";
+      document.head.appendChild(s);
+    })();
+
+    function embedYT(videoId: string) {
+      const YT = (window as any).YT;
+      if (!ytApiReady) {
+        ytPending = () => embedYT(videoId);
+        return;
+      }
+      if (ytPlayer && ytPlayer.loadVideoById) {
+        ytPlayer.loadVideoById(videoId);
+        return;
+      }
+      P.frame().innerHTML = '<div id="ytmount"></div>';
+      ytPlayer = new YT.Player("ytmount", {
+        videoId,
+        host: "https://www.youtube.com",
+        playerVars: { autoplay: 1, rel: 0, playsinline: 1 },
+        events: {
+          onStateChange(e: any) {
+            if (e.data === YT.PlayerState.ENDED) autoNext();
+            if (e.data === YT.PlayerState.PLAYING) {
+              $("#pPlay").textContent = "⏸";
+              $("#pPlay").title = "Pausa";
+            }
+            if (e.data === YT.PlayerState.PAUSED) {
+              $("#pPlay").textContent = "▶";
+              $("#pPlay").title = "Riprendi";
+            }
+          },
+          onError(e: any) {
+            if ([100, 101, 150].indexOf(e.data) >= 0 && P.current) {
+              const s = songById[P.current];
+              if (s) showNoEmbed(s, false);
+            }
+          },
+        },
+      });
+    }
+
+    function destroyYT() {
+      if (ytPlayer) {
+        try {
+          ytPlayer.destroy();
+        } catch {}
+        ytPlayer = null;
+      }
+      P.frame().innerHTML = "";
+    }
+
+    function showNoEmbed(song: any, opened: boolean) {
+      destroyYT();
+      if (opened) window.open(ytWatchUrl(song), "_blank", "noopener");
+      const hasNext = P.idx + 1 < P.queue.length;
+      P.frame().innerHTML =
+        '<div class="noembed">' +
+        `<div>«${song.title}» non si può riprodurre qui${opened ? ": aperto su YouTube in una nuova scheda." : "."}</div>` +
+        '<div style="display:flex;gap:8px">' +
+        `<a class="btn" href="${ytWatchUrl(song)}" target="_blank" rel="noopener">Apri su YouTube ↗</a>` +
+        (hasNext ? '<button class="btn ghost" type="button" data-next>Successiva ⏭</button>' : "") +
+        "</div></div>";
+      const nb = P.frame().querySelector<HTMLElement>("[data-next]");
+      if (nb) nb.addEventListener("click", playNext);
+    }
+
+    function updateQueueIndicator() {
+      $("#pQi").textContent = P.queue.length > 1 ? `${P.idx + 1} / ${P.queue.length}` : "";
+    }
+
+    function markPlaying(id: string | null) {
+      document.querySelectorAll(".song.playing").forEach((n) => n.classList.remove("playing"));
+      if (id)
+        document
+          .querySelectorAll(`.song[data-song="${id}"]`)
+          .forEach((n) => n.classList.add("playing"));
+    }
+
+    function play(id: string, queueIds?: string[]) {
+      const song = songById[id];
+      if (!song) return;
+      P.current = id;
+
+      if (queueIds && queueIds.length) {
+        P.queue = queueIds.slice();
+        P.idx = P.queue.indexOf(id);
+        if (P.idx < 0) {
+          P.queue = [id];
+          P.idx = 0;
+        }
+      } else if (P.queue.indexOf(id) >= 0) {
+        P.idx = P.queue.indexOf(id);
+      } else {
+        P.queue = [id];
+        P.idx = 0;
+      }
+
+      $("#pTtl").textContent = song.title;
+      $("#pSub").textContent =
+        (song.artist || "") +
+        (song.year ? " · " + song.year : "") +
+        (song.genre ? " · " + song.genre : "");
+      ($("#pOpen") as HTMLAnchorElement).href = ytSearchUrl(song);
+      P.box().classList.remove("hidden");
+      P.box().classList.add("expanded");
+      $("#pToggle").textContent = "▾";
+      updateQueueIndicator();
+
+      if (song.yt) {
+        $("#pPlay").textContent = "⏸";
+        $("#pPlay").title = "Pausa";
+        embedYT(song.yt);
+      } else {
+        showNoEmbed(song, true);
+      }
+      markPlaying(id);
+    }
+
+    function playNext() {
+      if (P.idx + 1 < P.queue.length) play(P.queue[P.idx + 1]);
+    }
+    function playPrev() {
+      if (P.idx - 1 >= 0) play(P.queue[P.idx - 1]);
+    }
+    // A fine brano salta i non incorporabili, per non aprire schede a sorpresa.
+    function autoNext() {
+      let i = P.idx + 1;
+      while (i < P.queue.length && !songById[P.queue[i]]?.yt) i++;
+      if (i < P.queue.length) play(P.queue[i]);
+    }
+    function close() {
+      destroyYT();
+      P.box().classList.add("hidden");
+      P.current = null;
+      P.queue = [];
+      P.idx = -1;
+      markPlaying(null);
+    }
+
+    // Controlli della barra (gli elementi persistono, basta legarli una volta).
+    $("#pToggle").addEventListener("click", () => {
+      P.box().classList.toggle("expanded");
+      $("#pToggle").textContent = P.box().classList.contains("expanded") ? "▾" : "▴";
+    });
+    $("#pNext").addEventListener("click", playNext);
+    $("#pPrev").addEventListener("click", playPrev);
+    $("#pClose").addEventListener("click", close);
+    $("#pPlay").addEventListener("click", () => {
+      const YT = (window as any).YT;
+      if (!ytPlayer || !ytPlayer.getPlayerState) return;
+      const st = ytPlayer.getPlayerState();
+      if (st === YT.PlayerState.PLAYING || st === YT.PlayerState.BUFFERING) ytPlayer.pauseVideo();
+      else ytPlayer.playVideo();
+    });
+
+    // Delegazione: il bottone play di una scheda ricava la coda dai brani
+    // visibili del contenitore [data-songlist] in cui si trova.
+    document.addEventListener("click", (e) => {
+      const btn = (e.target as HTMLElement).closest<HTMLElement>("[data-play]");
+      if (!btn) return;
+      const id = btn.dataset.play!;
+      const list = btn.closest("[data-songlist]");
+      if (list) {
+        const ids = Array.from(list.querySelectorAll<HTMLElement>(".song[data-song]"))
+          .filter((c) => !c.hasAttribute("hidden"))
+          .map((c) => c.dataset.song!);
+        play(id, ids);
+      } else {
+        play(id);
+      }
+    });
+
+    // API globale per gli onclick inline generati da inlineRefs().
+    (window as any).LAB = { play };
+
+    // Dopo ogni navigazione (View Transitions) ri-evidenzia il brano in corso.
+    document.addEventListener("astro:page-load", () => markPlaying(P.current));
+  }
+</script>

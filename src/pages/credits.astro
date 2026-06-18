@@ -1,0 +1,69 @@
+---
+import Base from "../layouts/Base.astro";
+import { meta } from "../data/course";
+import { href } from "../lib/links";
+import { inlineRefs } from "../lib/content";
+
+const tb = meta.textbook;
+---
+
+<Base
+  title="Crediti & fonti"
+  nav="credits"
+  description="Crediti, fonti e testo di riferimento del corso di Elementi di Economia dei Beni Musicali: appunti, libro di Franco Fabbri «Around the Clock» e ordinanza SIAE."
+>
+  <div class="crumb"><a href={href()}>Home</a> › Crediti</div>
+  <h1 class="title">Crediti & fonti</h1>
+  <div class="lead">
+    Strumento di studio personale per il corso. I contenuti sono appunti
+    rielaborati a fini didattici; i diritti dei testi originali restano dei
+    rispettivi autori ed editori.
+  </div>
+
+  <h2>Il corso</h2>
+  <div style="display:block">
+    {meta.course && <h3>{meta.course}</h3>}
+    {(meta.prof || meta.university) && (
+      <p>{[meta.prof, meta.university].filter(Boolean).join(" · ")}</p>
+    )}
+    {meta.courseLink && <p><a href={meta.courseLink} target="_blank" rel="noopener">{meta.courseLink}</a></p>}
+  </div>
+
+  {
+    tb && (
+      <>
+        <h2>Libro di testo</h2>
+        <div style="display:block">
+          <h3>{tb.title}</h3>
+          <p>{[tb.author, tb.publisher].filter(Boolean).join(" · ")}</p>
+          {tb.link && <p><a href={tb.link} target="_blank" rel="noopener">{tb.link}</a></p>}
+        </div>
+      </>
+    )
+  }
+
+  {
+    meta.sources && meta.sources.length > 0 && (
+      <>
+        <h2>Altre fonti</h2>
+        <ul>
+          {meta.sources.map((src) => (
+            <li set:html={inlineRefs(src)} />
+          ))}
+        </ul>
+      </>
+    )
+  }
+
+  <h2>Brani musicali</h2>
+  <p>
+    I brani non sono ospitati qui: sono collegati o riprodotti tramite YouTube, e
+    ogni contenuto resta dei rispettivi titolari dei diritti. Il player serve solo
+    da supporto all'ascolto durante lo studio.
+  </p>
+
+  <div class="note">
+    <b>Nota.</b> Se sei un autore o editore e ritieni che un contenuto vada modificato
+    o rimosso, è sufficiente segnalarlo: verrà aggiornato.
+  </div>
+</Base>
