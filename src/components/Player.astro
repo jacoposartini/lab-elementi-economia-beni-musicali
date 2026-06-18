@@ -43,6 +43,14 @@
     let ytApiReady = false;
     let ytPending: (() => void) | null = null;
 
+    // Icona del bottone play/pausa: ▶ quando è in pausa (= "riprendi"),
+    // ⏸ quando sta suonando. Unico punto di verità per evitare disallineamenti.
+    function setPlayIcon(playing: boolean) {
+      const b = $("#pPlay");
+      b.textContent = playing ? "⏸" : "▶";
+      b.title = playing ? "Pausa" : "Riprendi";
+    }
+
     (window as any).onYouTubeIframeAPIReady = function () {
       ytApiReady = true;
       if (ytPending) {
@@ -74,14 +82,11 @@
         playerVars: { autoplay: 1, rel: 0, playsinline: 1 },
         events: {
           onStateChange(e: any) {
-            if (e.data === YT.PlayerState.ENDED) autoNext();
-            if (e.data === YT.PlayerState.PLAYING) {
-              $("#pPlay").textContent = "⏸";
-              $("#pPlay").title = "Pausa";
-            }
-            if (e.data === YT.PlayerState.PAUSED) {
-              $("#pPlay").textContent = "▶";
-              $("#pPlay").title = "Riprendi";
+            if (e.data === YT.PlayerState.PLAYING) setPlayIcon(true);
+            if (e.data === YT.PlayerState.PAUSED) setPlayIcon(false);
+            if (e.data === YT.PlayerState.ENDED) {
+              setPlayIcon(false);
+              autoNext();
             }
           },
           onError(e: any) {
@@ -150,20 +155,29 @@
         P.idx = 0;
       }
 
+      // Su telefono il sottotitolo va su una riga sola: niente genere (poco utile
+      // qui), ma in coda l'indice i/n (la pill #pQi è nascosta in CSS).
+      const isMobile = window.matchMedia("(max-width:560px)").matches;
+      const baseSub = (song.artist || "") + (song.year ? " · " + song.year : "");
       $("#pTtl").textContent = song.title;
-      $("#pSub").textContent =
-        (song.artist || "") +
-        (song.year ? " · " + song.year : "") +
-        (song.genre ? " · " + song.genre : "");
+      $("#pSub").textContent = isMobile
+        ? baseSub + (P.queue.length > 1 ? ` · ${P.idx + 1}/${P.queue.length}` : "")
+        : baseSub + (song.genre ? " · " + song.genre : "");
       ($("#pOpen") as HTMLAnchorElement).href = ytSearchUrl(song);
       P.box().classList.remove("hidden");
-      P.box().classList.add("expanded");
-      $("#pToggle").textContent = "▾";
+      // Su mobile NON apriamo il video di default: "metti play e via", la barra
+      // fa da player audio e la lista resta visibile. Il video si apre col tap.
+      if (isMobile) {
+        P.box().classList.remove("expanded");
+        $("#pToggle").textContent = "▴";
+      } else {
+        P.box().classList.add("expanded");
+        $("#pToggle").textContent = "▾";
+      }
       updateQueueIndicator();
 
       if (song.yt) {
-        $("#pPlay").textContent = "⏸";
-        $("#pPlay").title = "Pausa";
+        setPlayIcon(true);
         embedYT(song.yt);
       } else {
         showNoEmbed(song, true);
@@ -193,10 +207,17 @@
     }
 
     // Controlli della barra (gli elementi persistono, basta legarli una volta).
-    $("#pToggle").addEventListener("click", () => {
+    const toggleVideo = () => {
       P.box().classList.toggle("expanded");
       $("#pToggle").textContent = P.box().classList.contains("expanded") ? "▾" : "▴";
-    });
+    };
+    $("#pToggle").addEventListener("click", toggleVideo);
+    // Su telefono anche un tap sul titolo apre/chiude il video (target ampio).
+    P.box()
+      .querySelector(".pmeta")
+      ?.addEventListener("click", () => {
+        if (window.matchMedia("(max-width:560px)").matches) toggleVideo();
+      });
     $("#pNext").addEventListener("click", playNext);
     $("#pPrev").addEventListener("click", playPrev);
     $("#pClose").addEventListener("click", close);
@@ -204,8 +225,13 @@
       const YT = (window as any).YT;
       if (!ytPlayer || !ytPlayer.getPlayerState) return;
       const st = ytPlayer.getPlayerState();
-      if (st === YT.PlayerState.PLAYING || st === YT.PlayerState.BUFFERING) ytPlayer.pauseVideo();
-      else ytPlayer.playVideo();
+      if (st === YT.PlayerState.PLAYING || st === YT.PlayerState.BUFFERING) {
+        ytPlayer.pauseVideo();
+        setPlayIcon(false);
+      } else {
+        ytPlayer.playVideo();
+        setPlayIcon(true);
+      }
     });
 
     // Delegazione: il bottone play di una scheda ricava la coda dai brani

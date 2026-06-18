@@ -115,6 +115,9 @@ const favicon =
       <main id="view" class="view"><slot /></main>
     </div>
 
+    {/* Sfondo scuro dietro la sidebar mobile: tap per chiudere. */}
+    <div id="sidebarScrim" class="scrim" aria-hidden="true"></div>
+
     <Player />
 
     <div class="made-by" aria-label="Crediti autore">
@@ -135,13 +138,22 @@ const favicon =
       if (!(window as any).__uiInit) {
         (window as any).__uiInit = true;
 
+        // Sidebar mobile: apri/chiudi insieme allo sfondo scuro (scrim).
+        const setSidebar = (open: boolean) => {
+          document.getElementById("sidebar")?.classList.toggle("show", open);
+          document.getElementById("sidebarScrim")?.classList.toggle("show", open);
+        };
+
         // Apri/chiudi i gruppi della sidebar (delegazione: gli elementi cambiano
         // a ogni navigazione, il listener su document no).
         document.addEventListener("click", (e) => {
           const head = (e.target as HTMLElement).closest("[data-toggle]");
           if (head) head.parentElement?.classList.toggle("open");
           const menu = (e.target as HTMLElement).closest("#menuToggle");
-          if (menu) document.getElementById("sidebar")?.classList.toggle("show");
+          if (menu) setSidebar(!document.getElementById("sidebar")?.classList.contains("show"));
+          // Tap sullo sfondo scuro o su un link della sidebar → chiudi.
+          if ((e.target as HTMLElement).closest("#sidebarScrim")) setSidebar(false);
+          if ((e.target as HTMLElement).closest(".sidebar a")) setSidebar(false);
         });
 
         // Ricerca globale con debounce.
@@ -163,10 +175,8 @@ const favicon =
           }
         });
 
-        // A ogni navigazione chiudi la sidebar mobile.
-        document.addEventListener("astro:page-load", () => {
-          document.getElementById("sidebar")?.classList.remove("show");
-        });
+        // A ogni navigazione chiudi la sidebar mobile (e lo sfondo scuro).
+        document.addEventListener("astro:page-load", () => setSidebar(false));
       }
     </script>
   </body>
